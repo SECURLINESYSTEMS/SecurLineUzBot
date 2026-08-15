@@ -29,6 +29,7 @@ def main_keyboard():
         ["📋 Аудит объекта"],
         ["💰 Получить расчёт"],
         ["📞 Связаться с нами"],
+        ["🏆 Выполненные объекты"],
     ]
 
     return ReplyKeyboardMarkup(
@@ -59,6 +60,8 @@ def service_keyboard():
 # =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+
     await update.message.reply_text(
         "Здравствуйте! 👋\n\n"
         "Вы обратились в SecurLineUz.\n"
@@ -78,10 +81,31 @@ async def start_application(
 ):
     await update.message.reply_text(
         "📞 Оставить заявку\n\n"
-        "Как вас зовут?"
+        "Как вас зовут?\n\n"
+        "Если хотите отменить заявку, нажмите:\n"
+        "⬅️ Назад к услугам"
     )
 
     return NAME
+
+
+# =========================
+# ОТМЕНА ЗАЯВКИ
+# =========================
+
+async def cancel_application(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    context.user_data.clear()
+
+    await update.message.reply_text(
+        "↩️ Заявка отменена.\n\n"
+        "Выберите нужную услугу 👇",
+        reply_markup=main_keyboard()
+    )
+
+    return ConversationHandler.END
 
 
 # =========================
@@ -98,7 +122,9 @@ async def get_name(
         "Спасибо! 👍\n\n"
         "Теперь отправьте ваш номер телефона.\n\n"
         "Например:\n"
-        "+998 90 123 45 67"
+        "+998 90 123 45 67\n\n"
+        "Чтобы отменить заявку, нажмите:\n"
+        "⬅️ Назад к услугам"
     )
 
     return PHONE
@@ -112,7 +138,11 @@ async def get_phone(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
-    name = context.user_data.get("name")
+    name = context.user_data.get(
+        "name",
+        "Не указано"
+    )
+
     phone = update.message.text
 
     user = update.effective_user
@@ -240,7 +270,8 @@ async def message_handler(
             "💰 Получить расчёт\n\n"
             "Чтобы подготовить предварительный расчёт, "
             "оставьте заявку.\n\n"
-            "Нажмите кнопку ниже.",
+            "Нажмите кнопку:\n"
+            "📞 Оставить заявку",
             reply_markup=service_keyboard()
         )
 
@@ -263,22 +294,7 @@ async def message_handler(
         return
 
     # -------------------------
-    # НАЗАД
-    # -------------------------
-
-    if text == "⬅️ Назад к услугам":
-
-        context.user_data.clear()
-
-        await update.message.reply_text(
-            "Выберите нужную услугу 👇",
-            reply_markup=main_keyboard()
-        )
-
-        return
-
-    # -------------------------
-    # СВЯЗАТЬСЯ
+    # СВЯЗАТЬСЯ С НАМИ
     # -------------------------
 
     if text == "📞 Связаться с нами":
@@ -292,6 +308,51 @@ async def message_handler(
             "Чтобы специалист связался с вами, "
             "оставьте заявку.",
             reply_markup=service_keyboard()
+        )
+
+        return
+
+    # -------------------------
+    # ВЫПОЛНЕННЫЕ ОБЪЕКТЫ
+    # -------------------------
+
+    if text == "🏆 Выполненные объекты":
+
+        context.user_data.clear()
+
+        await update.message.reply_text(
+            "🏆 Выполненные объекты\n\n"
+
+            "🏢 Бизнес-центры\n"
+            "📹 Установка систем видеонаблюдения.\n"
+            "🔥 Монтаж пожарной сигнализации.\n\n"
+
+            "🏪 Магазины и торговые объекты\n"
+            "📹 Установка камер видеонаблюдения.\n"
+            "🔥 Системы пожарной безопасности.\n\n"
+
+            "🏭 Производственные предприятия\n"
+            "🔥 Комплексная пожарная безопасность.\n"
+            "📹 Видеонаблюдение и контроль территории.\n\n"
+
+            "🛡️ SecurLineUz — безопасность "
+            "вашего объекта под ключ.",
+            reply_markup=main_keyboard()
+        )
+
+        return
+
+    # -------------------------
+    # НАЗАД К УСЛУГАМ
+    # -------------------------
+
+    if text == "⬅️ Назад к услугам":
+
+        context.user_data.clear()
+
+        await update.message.reply_text(
+            "Выберите нужную услугу 👇",
+            reply_markup=main_keyboard()
         )
 
         return
@@ -321,7 +382,10 @@ def main():
         TOKEN
     ).build()
 
-    # Команда /start
+    # -------------------------
+    # /start
+    # -------------------------
+
     app.add_handler(
         CommandHandler(
             "start",
@@ -329,46 +393,69 @@ def main():
         )
     )
 
-    # Заявка
+    # -------------------------
+    # ФОРМА ЗАЯВКИ
+    # -------------------------
+
     application_handler = ConversationHandler(
+
         entry_points=[
-    MessageHandler(
-        filters.Regex(
-            "^📞 Оставить заявку$"
-        ),
-        start_application
-    )
-],
+            MessageHandler(
+                filters.Regex(
+                    "^📞 Оставить заявку$"
+                ),
+                start_application
             )
         ],
+
         states={
-    NAME: [
-        MessageHandler(
-            filters.Regex("^⬅️ Назад к услугам$"),
-            cancel_application
-        ),
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            get_name
-        )
-    ],
-    PHONE: [
-        MessageHandler(
-            filters.Regex("^⬅️ Назад к услугам$"),
-            cancel_application
-        ),
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            get_phone
-        )
-    ],
-},
+
+            NAME: [
+                MessageHandler(
+                    filters.Regex(
+                        "^⬅️ Назад к услугам$"
+                    ),
+                    cancel_application
+                ),
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    get_name
+                )
+            ],
+
+            PHONE: [
+                MessageHandler(
+                    filters.Regex(
+                        "^⬅️ Назад к услугам$"
+                    ),
+                    cancel_application
+                ),
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    get_phone
+                )
+            ],
+
+        },
+
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(
+                    "^⬅️ Назад к услугам$"
+                ),
+                cancel_application
+            )
+        ],
+    )
 
     app.add_handler(
         application_handler
     )
 
-    # Остальные сообщения
+    # -------------------------
+    # ОСТАЛЬНЫЕ СООБЩЕНИЯ
+    # -------------------------
+
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
@@ -385,16 +472,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-async def cancel_application(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-    context.user_data.clear()
-
-    await update.message.reply_text(
-        "↩️ Заявка отменена.\n\n"
-        "Выберите нужную услугу 👇",
-        reply_markup=main_keyboard()
-    )
-
-    return ConversationHandler.END
