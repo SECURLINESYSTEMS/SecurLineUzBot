@@ -332,29 +332,37 @@ def main():
     # Заявка
     application_handler = ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(
-                    "^📞 Оставить заявку$"
-                ),
-                start_application
+    MessageHandler(
+        filters.Regex(
+            "^📞 Оставить заявку$"
+        ),
+        start_application
+    )
+],
             )
         ],
         states={
-            NAME: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND,
-                    get_name
-                )
-            ],
-            PHONE: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND,
-                    get_phone
-                )
-            ],
-        },
-        fallbacks=[],
-    )
+    NAME: [
+        MessageHandler(
+            filters.Regex("^⬅️ Назад к услугам$"),
+            cancel_application
+        ),
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            get_name
+        )
+    ],
+    PHONE: [
+        MessageHandler(
+            filters.Regex("^⬅️ Назад к услугам$"),
+            cancel_application
+        ),
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            get_phone
+        )
+    ],
+},
 
     app.add_handler(
         application_handler
@@ -377,3 +385,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+async def cancel_application(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    context.user_data.clear()
+
+    await update.message.reply_text(
+        "↩️ Заявка отменена.\n\n"
+        "Выберите нужную услугу 👇",
+        reply_markup=main_keyboard()
+    )
+
+    return ConversationHandler.END
