@@ -176,23 +176,7 @@ async def message_handler(
     )
     return
     
-    if text == "💰 Узнать стоимость":
-        await update.message.reply_text(
-            "💰 Расчёт стоимости\n\n"
-            "Напишите площадь объекта и его адрес.\n\n"
-            "Например:\n"
-            "200 м², Ташкент, Юнусабад.\n\n"
-            "Специалист подготовит предварительный расчёт."
-        )
-        return
-
-    if text == "⬅️ Назад к услугам":
-        await update.message.reply_text(
-            "Выберите нужную услугу 👇",
-            reply_markup=main_keyboard()
-        )
-        return
-
+    
     if text == "📋 Аудит объекта":
         await update.message.reply_text(
             "📋 Аудит объекта\n\n"
