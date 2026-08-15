@@ -47,6 +47,18 @@ def video_keyboard():
     )
 
 
+def fire_keyboard():
+    keyboard = [
+        ["💰 Узнать стоимость"],
+        ["📞 Оставить заявку"],
+        ["⬅️ Назад к услугам"],
+    ]
+
+    return ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True
+    )
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Здравствуйте! 👋\n\n"
@@ -175,8 +187,7 @@ async def message_handler(
         reply_markup=fire_keyboard()
     )
     return
-    
-    
+
     if text == "📋 Аудит объекта":
         await update.message.reply_text(
             "📋 Аудит объекта\n\n"
