@@ -10,14 +10,17 @@ from telegram.ext import (
     filters,
 )
 
-
 TOKEN = os.getenv("BOT_TOKEN")
 
-# Telegram ID, куда будут приходить заявки
+# Telegram ID, куда приходят заявки
 ADMIN_ID = 8895567644
 
 NAME, PHONE = range(2)
 
+
+# =========================
+# ГЛАВНОЕ МЕНЮ
+# =========================
 
 def main_keyboard():
     keyboard = [
@@ -34,7 +37,11 @@ def main_keyboard():
     )
 
 
-def video_keyboard():
+# =========================
+# МЕНЮ УСЛУГИ
+# =========================
+
+def service_keyboard():
     keyboard = [
         ["💰 Узнать стоимость"],
         ["📞 Оставить заявку"],
@@ -47,17 +54,9 @@ def video_keyboard():
     )
 
 
-def fire_keyboard():
-    keyboard = [
-        ["💰 Узнать стоимость"],
-        ["📞 Оставить заявку"],
-        ["⬅️ Назад к услугам"],
-    ]
-
-    return ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True
-    )
+# =========================
+# START
+# =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -69,9 +68,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# -------------------------
-# ЗАЯВКА
-# -------------------------
+# =========================
+# НАЧАЛО ЗАЯВКИ
+# =========================
 
 async def start_application(
     update: Update,
@@ -85,6 +84,10 @@ async def start_application(
     return NAME
 
 
+# =========================
+# ПОЛУЧАЕМ ИМЯ
+# =========================
+
 async def get_name(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -93,12 +96,17 @@ async def get_name(
 
     await update.message.reply_text(
         "Спасибо! 👍\n\n"
-        "Теперь отправьте ваш номер телефона.\n"
-        "Например: +998 90 123 45 67"
+        "Теперь отправьте ваш номер телефона.\n\n"
+        "Например:\n"
+        "+998 90 123 45 67"
     )
 
     return PHONE
 
+
+# =========================
+# ПОЛУЧАЕМ ТЕЛЕФОН
+# =========================
 
 async def get_phone(
     update: Update,
@@ -115,11 +123,16 @@ async def get_phone(
         else "нет username"
     )
 
-    # Отправляем заявку владельцу
+    service = context.user_data.get(
+        "service",
+        "Не указана"
+    )
+
     await context.bot.send_message(
         chat_id=ADMIN_ID,
         text=(
             "🔔 НОВАЯ ЗАЯВКА SecurLineUz\n\n"
+            f"🛠 Услуга: {service}\n"
             f"👤 Имя: {name}\n"
             f"📞 Телефон: {phone}\n"
             f"💬 Telegram: {username}\n"
@@ -130,7 +143,7 @@ async def get_phone(
     await update.message.reply_text(
         "✅ Спасибо за заявку!\n\n"
         "Мы получили ваши данные.\n"
-        "Специалист SecurLineUz свяжется с вами в ближайшее время.",
+        "Специалист SecurLineUz свяжется с вами.",
         reply_markup=main_keyboard()
     )
 
@@ -139,9 +152,9 @@ async def get_phone(
     return ConversationHandler.END
 
 
-# -------------------------
-# УСЛУГИ
-# -------------------------
+# =========================
+# ОБРАБОТКА УСЛУГ
+# =========================
 
 async def message_handler(
     update: Update,
@@ -149,71 +162,143 @@ async def message_handler(
 ):
     text = update.message.text
 
+    # -------------------------
+    # ПОЖАРНАЯ БЕЗОПАСНОСТЬ
+    # -------------------------
+
+    if text == "🔥 Пожарная безопасность":
+
+        context.user_data["service"] = (
+            "🔥 Пожарная безопасность"
+        )
+
+        await update.message.reply_text(
+            "🔥 Пожарная безопасность\n\n"
+            "Проектирование и монтаж систем "
+            "пожарной сигнализации.\n\n"
+            "Обслуживание и проверка оборудования.\n\n"
+            "Поможем обеспечить безопасность "
+            "вашего объекта.",
+            reply_markup=service_keyboard()
+        )
+
+        return
+
+    # -------------------------
+    # ВИДЕОНАБЛЮДЕНИЕ
+    # -------------------------
+
     if text == "📹 Видеонаблюдение":
+
+        context.user_data["service"] = (
+            "📹 Видеонаблюдение"
+        )
+
         await update.message.reply_text(
             "📹 Видеонаблюдение\n\n"
-            "Установка камер видеонаблюдения для дома, "
-            "офиса, магазина и предприятия.\n\n"
-            "Мы поможем подобрать оборудование и установить "
+            "Установка камер видеонаблюдения "
+            "для дома, офиса, магазина и предприятия.\n\n"
+            "Подберём оборудование и установим "
             "систему под ваш объект.",
-            reply_markup=video_keyboard()
+            reply_markup=service_keyboard()
         )
+
         return
+
+    # -------------------------
+    # АУДИТ
+    # -------------------------
+
+    if text == "📋 Аудит объекта":
+
+        context.user_data["service"] = (
+            "📋 Аудит объекта"
+        )
+
+        await update.message.reply_text(
+            "📋 Аудит объекта\n\n"
+            "Проверим объект на соответствие "
+            "требованиям безопасности.\n\n"
+            "Подготовим рекомендации по устранению "
+            "выявленных нарушений.",
+            reply_markup=service_keyboard()
+        )
+
+        return
+
+    # -------------------------
+    # ПОЛУЧИТЬ РАСЧЁТ
+    # -------------------------
+
+    if text == "💰 Получить расчёт":
+
+        context.user_data["service"] = (
+            "💰 Получить расчёт"
+        )
+
+        await update.message.reply_text(
+            "💰 Получить расчёт\n\n"
+            "Чтобы подготовить предварительный расчёт, "
+            "оставьте заявку.\n\n"
+            "Нажмите кнопку ниже.",
+            reply_markup=service_keyboard()
+        )
+
+        return
+
+    # -------------------------
+    # УЗНАТЬ СТОИМОСТЬ
+    # -------------------------
 
     if text == "💰 Узнать стоимость":
+
         await update.message.reply_text(
-            "💰 Расчёт стоимости\n\n"
-            "Напишите площадь объекта и его адрес.\n\n"
-            "Например:\n"
-            "200 м², Ташкент, Юнусабад.\n\n"
-            "Специалист подготовит предварительный расчёт."
+            "💰 Узнать стоимость\n\n"
+            "Оставьте заявку, и специалист "
+            "уточнит параметры объекта "
+            "и подготовит стоимость.",
+            reply_markup=service_keyboard()
         )
+
         return
 
+    # -------------------------
+    # НАЗАД
+    # -------------------------
+
     if text == "⬅️ Назад к услугам":
+
+        context.user_data.clear()
+
         await update.message.reply_text(
             "Выберите нужную услугу 👇",
             reply_markup=main_keyboard()
         )
+
         return
 
-    if text == "🔥 Пожарная безопасность":
-    await update.message.reply_text(
-        "🔥 Пожарная безопасность\n\n"
-        "Проектирование и монтаж систем пожарной сигнализации.\n\n"
-        "Обслуживание и проверка оборудования.\n\n"
-        "Поможем обеспечить соответствие объекта требованиям "
-        "пожарной безопасности.",
-        reply_markup=fire_keyboard()
-    )
-    return
-
-    if text == "📋 Аудит объекта":
-        await update.message.reply_text(
-            "📋 Аудит объекта\n\n"
-            "Проверим объект на соответствие требованиям "
-            "безопасности и подготовим рекомендации.",
-            reply_markup=main_keyboard()
-        )
-        return
-
-    if text == "💰 Получить расчёт":
-        await update.message.reply_text(
-            "💰 Получить расчёт\n\n"
-            "Напишите площадь объекта и его адрес.\n"
-            "Специалист подготовит предварительный расчёт.",
-            reply_markup=main_keyboard()
-        )
-        return
+    # -------------------------
+    # СВЯЗАТЬСЯ
+    # -------------------------
 
     if text == "📞 Связаться с нами":
+
+        context.user_data["service"] = (
+            "📞 Общий запрос"
+        )
+
         await update.message.reply_text(
             "📞 Связаться с нами\n\n"
-            "Чтобы оставить заявку, нажмите кнопку:\n"
-            "📞 Оставить заявку",
-            reply_markup=video_keyboard()
+            "Чтобы специалист связался с вами, "
+            "оставьте заявку.",
+            reply_markup=service_keyboard()
         )
+
         return
+
+    # -------------------------
+    # НЕИЗВЕСТНОЕ СООБЩЕНИЕ
+    # -------------------------
 
     await update.message.reply_text(
         "Пожалуйста, выберите нужную услугу 👇",
@@ -221,22 +306,36 @@ async def message_handler(
     )
 
 
+# =========================
+# MAIN
+# =========================
+
 def main():
+
     if not TOKEN:
-        raise ValueError("BOT_TOKEN не найден")
+        raise ValueError(
+            "BOT_TOKEN не найден"
+        )
 
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(
+        TOKEN
+    ).build()
 
-    # /start
+    # Команда /start
     app.add_handler(
-        CommandHandler("start", start)
+        CommandHandler(
+            "start",
+            start
+        )
     )
 
-    # Форма заявки
+    # Заявка
     application_handler = ConversationHandler(
         entry_points=[
             MessageHandler(
-                filters.Regex("^📞 Оставить заявку$"),
+                filters.Regex(
+                    "^📞 Оставить заявку$"
+                ),
                 start_application
             )
         ],
@@ -257,7 +356,9 @@ def main():
         fallbacks=[],
     )
 
-    app.add_handler(application_handler)
+    app.add_handler(
+        application_handler
+    )
 
     # Остальные сообщения
     app.add_handler(
@@ -267,7 +368,9 @@ def main():
         )
     )
 
-    print("SecurLineUzBot запущен...")
+    print(
+        "SecurLineUzBot запущен..."
+    )
 
     app.run_polling()
 
