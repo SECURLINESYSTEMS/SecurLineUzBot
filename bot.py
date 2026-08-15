@@ -1,20 +1,31 @@
 import os
 
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    ConversationHandler,
+    filters,
+)
 
 
 TOKEN = os.getenv("BOT_TOKEN")
 
+# Telegram ID, куда будут приходить заявки
+ADMIN_ID = 8895567644
 
-# Главное меню
+NAME, PHONE = range(2)
+
+
 def main_keyboard():
     keyboard = [
         ["🔥 Пожарная безопасность"],
         ["📹 Видеонаблюдение"],
         ["📋 Аудит объекта"],
         ["💰 Получить расчёт"],
-        ["📞 Связаться с нами"]
+        ["📞 Связаться с нами"],
     ]
 
     return ReplyKeyboardMarkup(
@@ -23,12 +34,11 @@ def main_keyboard():
     )
 
 
-# Меню видеонаблюдения
 def video_keyboard():
     keyboard = [
         ["💰 Узнать стоимость"],
         ["📞 Оставить заявку"],
-        ["⬅️ Назад к услугам"]
+        ["⬅️ Назад к услугам"],
     ]
 
     return ReplyKeyboardMarkup(
@@ -37,7 +47,6 @@ def video_keyboard():
     )
 
 
-# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Здравствуйте! 👋\n\n"
@@ -48,23 +57,97 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# Обработка сообщений
-async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# -------------------------
+# ЗАЯВКА
+# -------------------------
+
+async def start_application(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    await update.message.reply_text(
+        "📞 Оставить заявку\n\n"
+        "Как вас зовут?"
+    )
+
+    return NAME
+
+
+async def get_name(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    context.user_data["name"] = update.message.text
+
+    await update.message.reply_text(
+        "Спасибо! 👍\n\n"
+        "Теперь отправьте ваш номер телефона.\n"
+        "Например: +998 90 123 45 67"
+    )
+
+    return PHONE
+
+
+async def get_phone(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    name = context.user_data.get("name")
+    phone = update.message.text
+
+    user = update.effective_user
+
+    username = (
+        f"@{user.username}"
+        if user.username
+        else "нет username"
+    )
+
+    # Отправляем заявку владельцу
+    await context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=(
+            "🔔 НОВАЯ ЗАЯВКА SecurLineUz\n\n"
+            f"👤 Имя: {name}\n"
+            f"📞 Телефон: {phone}\n"
+            f"💬 Telegram: {username}\n"
+            f"🆔 ID клиента: {user.id}"
+        )
+    )
+
+    await update.message.reply_text(
+        "✅ Спасибо за заявку!\n\n"
+        "Мы получили ваши данные.\n"
+        "Специалист SecurLineUz свяжется с вами в ближайшее время.",
+        reply_markup=main_keyboard()
+    )
+
+    context.user_data.clear()
+
+    return ConversationHandler.END
+
+
+# -------------------------
+# УСЛУГИ
+# -------------------------
+
+async def message_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
     text = update.message.text
 
-    # Видеонаблюдение
     if text == "📹 Видеонаблюдение":
         await update.message.reply_text(
             "📹 Видеонаблюдение\n\n"
-            "Установка камер видеонаблюдения для дома, офиса, "
-            "магазина и предприятия.\n\n"
+            "Установка камер видеонаблюдения для дома, "
+            "офиса, магазина и предприятия.\n\n"
             "Мы поможем подобрать оборудование и установить "
             "систему под ваш объект.",
             reply_markup=video_keyboard()
         )
         return
 
-    # Узнать стоимость
     if text == "💰 Узнать стоимость":
         await update.message.reply_text(
             "💰 Расчёт стоимости\n\n"
@@ -75,16 +158,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Оставить заявку
-    if text == "📞 Оставить заявку":
-        await update.message.reply_text(
-            "📞 Оставить заявку\n\n"
-            "Напишите ваше имя и номер телефона.\n\n"
-            "Специалист SecurLineUz свяжется с вами."
-        )
-        return
-
-    # Назад
     if text == "⬅️ Назад к услугам":
         await update.message.reply_text(
             "Выберите нужную услугу 👇",
@@ -92,7 +165,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Пожарная безопасность
     if text == "🔥 Пожарная безопасность":
         await update.message.reply_text(
             "🔥 Пожарная безопасность\n\n"
@@ -102,7 +174,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Аудит объекта
     if text == "📋 Аудит объекта":
         await update.message.reply_text(
             "📋 Аудит объекта\n\n"
@@ -112,41 +183,69 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Получить расчёт
     if text == "💰 Получить расчёт":
         await update.message.reply_text(
             "💰 Получить расчёт\n\n"
-            "Напишите нам площадь объекта и его адрес.\n"
+            "Напишите площадь объекта и его адрес.\n"
             "Специалист подготовит предварительный расчёт.",
             reply_markup=main_keyboard()
         )
         return
 
-    # Связаться с нами
     if text == "📞 Связаться с нами":
         await update.message.reply_text(
             "📞 Связаться с нами\n\n"
-            "Оставьте свой номер телефона или напишите сообщение — "
-            "специалист свяжется с вами.",
-            reply_markup=main_keyboard()
+            "Чтобы оставить заявку, нажмите кнопку:\n"
+            "📞 Оставить заявку",
+            reply_markup=video_keyboard()
         )
         return
 
-    # Если сообщение не распознано
     await update.message.reply_text(
-        "Пожалуйста, выберите нужную услугу в меню 👇",
+        "Пожалуйста, выберите нужную услугу 👇",
         reply_markup=main_keyboard()
     )
 
 
-# Запуск бота
 def main():
     if not TOKEN:
         raise ValueError("BOT_TOKEN не найден")
 
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
+    # /start
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    # Форма заявки
+    application_handler = ConversationHandler(
+        entry_points=[
+            MessageHandler(
+                filters.Regex("^📞 Оставить заявку$"),
+                start_application
+            )
+        ],
+        states={
+            NAME: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    get_name
+                )
+            ],
+            PHONE: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    get_phone
+                )
+            ],
+        },
+        fallbacks=[],
+    )
+
+    app.add_handler(application_handler)
+
+    # Остальные сообщения
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
