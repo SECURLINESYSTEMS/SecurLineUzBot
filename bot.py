@@ -1,6 +1,6 @@
 import os
 
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -14,6 +14,9 @@ TOKEN = os.getenv("BOT_TOKEN")
 
 # Telegram ID, куда приходят заявки
 ADMIN_ID = 8895567644
+
+# Ссылка на Telegram-группу
+GROUP_URL = "https://t.me/securlinesystems"
 
 NAME, PHONE = range(2)
 
@@ -30,6 +33,7 @@ def main_keyboard():
         ["💰 Получить расчёт"],
         ["📞 Связаться с нами"],
         ["🏆 Выполненные объекты"],
+        ["👥 Наша группа"],
     ]
 
     return ReplyKeyboardMarkup(
@@ -338,6 +342,40 @@ async def message_handler(
             "🛡️ SecurLineUz — безопасность "
             "вашего объекта под ключ.",
             reply_markup=main_keyboard()
+        )
+
+        return
+
+    # -------------------------
+    # НАША TELEGRAM-ГРУППА
+    # -------------------------
+
+    if text == "👥 Наша группа":
+
+        context.user_data.clear()
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "👥 Вступить в группу",
+                    url=GROUP_URL
+                )
+            ]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            "👥 Наша группа SecurLineUz\n\n"
+            "Присоединяйтесь к нашей Telegram-группе! 🔥\n\n"
+            "Там мы будем публиковать:\n"
+            "🏢 Выполненные объекты\n"
+            "📸 Фото наших работ\n"
+            "🔥 Советы по пожарной безопасности\n"
+            "📹 Видеонаблюдение\n"
+            "🎁 Акции и специальные предложения\n\n"
+            "Нажмите кнопку ниже 👇",
+            reply_markup=reply_markup
         )
 
         return
